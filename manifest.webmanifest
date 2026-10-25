@@ -1,0 +1,16 @@
+{
+  "name": "TubeCards",
+  "short_name": "TubeCards",
+  "description": "GRE vocabulary and Italian flashcards for your commute.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#e8edf0",
+  "theme_color": "#e8edf0",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>TubeCards</title>
+    <meta name="description" content="GRE vocabulary and Italian flashcards for your commute." />
+    <meta name="theme-color" content="#e8edf0" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="TubeCards" />
+    <meta name="robots" content="noindex" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="icons/icon-192.png" />
+    <link rel="stylesheet" href="css/app.css" />
+    <script>
+      // Apply the saved theme before first paint to avoid a flash.
+      try {
+        var t = localStorage.getItem('tubecards.theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="app"><p class="boot" role="status">Loading…</p></div>
+    <noscript><p class="boot">TubeCards needs JavaScript to run.</p></noscript>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
