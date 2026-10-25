@@ -11,7 +11,7 @@ It works in **demo mode** straight away (no sign-in, data stays in that browser)
 | Create and edit cards, front and back | **Cards** tab: Add, tap any card to edit. Fields change with the card type |
 | Weekly uploads | **Cards > Import** (paste or choose a CSV, TSV or JSON file). Each batch gets a week label, so you can study just this week's cards |
 | Quizzing that helps you remember | **Study** tab: spaced repetition (cards return just before you would forget them), mixed decks, multiple choice and flip cards, GRE exam-date mode |
-| GRE card: word + sentence on front, meaning on back | GRE card type. The word is underlined inside its sentence |
+| GRE card: word + sentence on front, meaning on back | GRE card type. The word is underlined inside its sentence. A speaker button next to the word (and its sentence) reads it aloud in English, on the front, on the back, and when you study in reverse (meaning first, then reveal the word) |
 | Listen to Italian | **Speak > Listen** plays your sentences hands-free; Italian cards can also speak automatically in Study |
 | Read or speak Italian and get feedback | **Speak > Read aloud** (word-by-word feedback) and **Type it** (hear it, type it; silent) |
 | Performance analytics | **Stats** tab |
@@ -72,7 +72,7 @@ It works in **demo mode** straight away (no sign-in, data stays in that browser)
 ## Things to know on iPhone
 
 - **Speech recognition** (Read aloud) sends audio to Apple, so it needs a connection, and Dictation must be on (Settings > General > Keyboard). iOS often blocks it for apps added to the Home Screen; if the microphone button reports an error, open the same link in a normal Safari tab. **Type it** works everywhere.
-- **Italian voices**: for the best voice, download one in Settings > Accessibility > Spoken Content > Voices > Italian. The app uses whichever you pick in **More > Voices**.
+- **Voices**: for the best voices, download them in Settings > Accessibility > Spoken Content > Voices (Italian, and an English one such as Samantha or Daniel). The app uses whichever you pick in **More > Voices**. GRE words are read with a US English voice by default, since the GRE is an American exam.
 - iOS pauses speech when the screen locks, so keep the screen on during a Listen playlist.
 - The speaking score shows how well the phone's recogniser understood you. It is a guide for practice, not an examiner, and it cannot judge accent quality.
 

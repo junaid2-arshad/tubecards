@@ -1,5 +1,5 @@
 // Offline support. Bump VERSION whenever you deploy changes so phones pick up the new files.
-const VERSION = 'tubecards-v1';
+const VERSION = 'tubecards-v2';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/app.js', 'js/store.js', 'js/srs.js', 'js/csv.js', 'js/stats.js', 'js/pronounce.js', 'js/speech.js',

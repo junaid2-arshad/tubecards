@@ -87,11 +87,12 @@ export function runSession(opts) {
   }
 
   // ---------- helpers ----------
-  const speakIt = async (text) => {
+  const speakIt = async (text, lang = 'it-IT') => {
     await loadVoices();
-    speak(text, { lang: 'it-IT', rate: store.state.settings.speechRate, voiceURI: store.state.settings.voiceURI });
+    const st = store.state.settings;
+    speak(text, { lang, rate: st.speechRate, voiceURI: lang.startsWith('it') ? st.voiceURI : st.enVoiceURI });
   };
-  const onSpeak = (t) => speakIt(t);
+  const onSpeak = (t, lang) => speakIt(t, lang);
   const setUndo = () => (undoBtn.disabled = undoStack.length === 0);
   const cardsLeft = () => queue.filter((id) => store.state.cards.has(id));
 
