@@ -3,20 +3,19 @@
 const ALIASES = {
   deck: ['deck', 'deck name', 'set'],
   kind: ['type', 'kind', 'card type'],
-  front: ['front', 'word', 'term', 'italian', 'question', 'prompt'],
+  hook: ['hook', 'memory hook', 'memory aid', 'mnemonic'],
+  front: ['front', 'word', 'term', 'question', 'prompt'],
   hint: ['hint', 'sentence', 'example', 'example sentence', 'context', 'usage'],
   back: ['back', 'meaning', 'definition', 'english', 'translation', 'answer'],
-  notes: ['notes', 'note', 'synonyms', 'extra', 'mnemonic'],
+  notes: ['notes', 'note', 'synonyms', 'extra'],
   tags: ['tags', 'tag'],
   batch: ['week', 'batch'],
 };
 
-export const EXPORT_COLUMNS = ['deck', 'type', 'front', 'hint', 'back', 'notes', 'tags', 'week'];
+export const EXPORT_COLUMNS = ['deck', 'type', 'front', 'hint', 'back', 'notes', 'tags', 'week', 'hook'];
 
 export const TEMPLATES = {
-  gre: 'deck,type,front,hint,back,notes,tags\nGRE Vocab,gre,ephemeral,"Fame in the music industry can be ephemeral.",lasting a very short time,"fleeting, transient",week-1\n',
-  italian:
-    'deck,type,front,hint,back,notes,tags\nItaliano,italian,Vorrei un caffè,"Al bar: Vorrei un caffè, per favore.",I would like a coffee,"vorrei = I would like (polite)",bar\n',
+  gre: 'deck,type,front,hint,back,notes,tags,hook\nGRE Vocab,gre,ephemeral,"Fame in the music industry can be ephemeral.",lasting a very short time,"fleeting, transient",week-1,"ephemeral sounds like a fem-eral: a flower that dies in a day"\n',
 };
 
 export function detectDelimiter(text) {
@@ -81,17 +80,9 @@ export function toCsv(rows, delim = ',') {
   return rows.map((r) => r.map(esc).join(delim)).join('\n') + '\n';
 }
 
-export function normKind(raw, deckName = '', fallback = 'basic') {
-  const k = String(raw || '').toLowerCase().trim();
-  if (k) {
-    if (/gre|vocab|word/.test(k)) return 'gre';
-    if (/ital|^it$/.test(k)) return 'italian';
-    if (/basic|general|other/.test(k)) return 'basic';
-  }
-  const d = String(deckName).toLowerCase();
-  if (/\bgre\b|vocab/.test(d)) return 'gre';
-  if (/ital/.test(d)) return 'italian';
-  return fallback;
+// The app only holds GRE words now, so every imported row is a GRE card whatever its type column says.
+export function normKind() {
+  return 'gre';
 }
 
 function splitTags(s) {
@@ -135,14 +126,15 @@ export function parseCards(text, defaults = {}, { headerless = false } = {}) {
       errors.push({ line, msg: !front ? 'Missing front' : 'Missing back' });
       continue;
     }
-    const deck = get('deck') || defaults.deck || 'My cards';
+    const deck = get('deck') || defaults.deck || 'GRE Vocab';
     cards.push({
       deck,
-      kind: normKind(get('kind'), deck, defaults.kind || 'basic'),
+      kind: 'gre',
       front,
       hint: get('hint'),
       back,
       notes: get('notes'),
+      hook: get('hook'),
       tags: splitTags(get('tags')),
       batch: get('batch'),
     });
@@ -167,14 +159,15 @@ export function parseJsonCards(text, defaults = {}) {
       errors.push({ line: i + 1, msg: !front ? 'Missing front' : 'Missing back' });
       return;
     }
-    const deck = String(o.deck || defaults.deck || 'My cards');
+    const deck = String(o.deck || defaults.deck || 'GRE Vocab');
     cards.push({
       deck,
-      kind: normKind(o.kind || o.type, deck, defaults.kind || 'basic'),
+      kind: 'gre',
       front,
       hint: String(o.hint ?? o.sentence ?? '').trim(),
       back,
       notes: String(o.notes ?? '').trim(),
+      hook: String(o.hook ?? '').trim(),
       tags: Array.isArray(o.tags) ? o.tags.map(String) : splitTags(o.tags),
       batch: String(o.week ?? o.batch ?? ''),
     });
@@ -185,7 +178,7 @@ export function parseJsonCards(text, defaults = {}) {
 export function exportCardsCsv(cards, decks) {
   const rows = [EXPORT_COLUMNS];
   for (const c of cards) {
-    rows.push([decks.get(c.deckId)?.name || '', c.kind, c.front, c.hint || '', c.back, c.notes || '', (c.tags || []).join(';'), c.batch || '']);
+    rows.push([decks.get(c.deckId)?.name || '', 'gre', c.front, c.hint || '', c.back, c.notes || '', (c.tags || []).join(';'), c.batch || '', c.hook || '']);
   }
   return toCsv(rows);
 }

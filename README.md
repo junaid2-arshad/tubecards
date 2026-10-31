@@ -1,6 +1,6 @@
 # TubeCards
 
-GRE vocabulary and Italian flashcards for your commute. A static web app: it runs entirely in the browser, is hosted on GitHub Pages, and uses Firebase (free tier) for sign-in and for syncing your cards and answers.
+GRE vocabulary for your commute: learn new words, recall them from memory, and use them in sentences. A static web app: it runs entirely in the browser, is hosted on GitHub Pages, and uses Firebase (free tier) for sign-in and for syncing your cards and answers.
 
 It works in **demo mode** straight away (no sign-in, data stays in that browser). Follow the setup below to turn on sign-in and sync.
 
@@ -8,15 +8,17 @@ It works in **demo mode** straight away (no sign-in, data stays in that browser)
 
 | You asked for | Where it is |
 |---|---|
-| Create and edit cards, front and back | **Cards** tab: Add, tap any card to edit. Fields change with the card type |
-| Weekly uploads | **Cards > Import** (paste or choose a CSV, TSV or JSON file). Each batch gets a week label, so you can study just this week's cards |
-| Quizzing that helps you remember | **Study** tab: spaced repetition (cards return just before you would forget them), mixed decks, multiple choice and flip cards, GRE exam-date mode |
-| GRE card: word + sentence on front, meaning on back | GRE card type. The word is underlined inside its sentence. A speaker button next to the word (and its sentence) reads it aloud in English, on the front, on the back, and when you study in reverse (meaning first, then reveal the word) |
-| Listen to Italian | **Speak > Listen** plays your sentences hands-free; Italian cards can also speak automatically in Study |
-| Read or speak Italian and get feedback | **Speak > Read aloud** (word-by-word feedback) and **Type it** (hear it, type it; silent) |
-| Performance analytics | **Stats** tab |
-| Every quiz answer tracked | Each answer is stored with time, result, card, and (in multiple choice) the wrong option you picked |
+| Create and edit cards, front and back | **Cards** tab: Add, tap any card to edit. Each word can have an example sentence, a memory hook and notes |
+| Weekly uploads | **Cards > Import** (paste or choose a CSV, TSV or JSON file). Each batch gets a week label |
+| Learning words quickly | **Study > Learn new words**: a small round of 5 words (change in More). You meet them, match them, fill a blank, type each from its meaning, then write your own sentence |
+| Using words in context | **Practice** tab: fill the blank from your own example sentences, write sentences, and 38 original GRE-style text completion and sentence equivalence questions |
+| Remembering over time | **Study > Review**: spaced repetition, flip or multiple choice, reverse mode, GRE exam-date mode |
+| Hearing the word | Speaker button on every word and sentence (English voice on the phone) |
+| Performance analytics | **Stats** tab, including accuracy by activity |
+| Every answer tracked | Each answer is stored with time, result, word and activity |
 | Login | Firebase email and password, locked to your account |
+
+**Official GRE questions** are copyrighted by ETS and are not included. The questions in this app were written for it. ETS offers free POWERPREP Online practice tests; use them for full-length practice.
 
 ## One-time setup (about 15 minutes)
 
@@ -42,16 +44,15 @@ It works in **demo mode** straight away (no sign-in, data stays in that browser)
 
 1. Open the link in **Safari** and sign in.
 2. Tap **Share > Add to Home Screen** for an app icon.
-3. Open it once while online so it can save itself for the Tube. After that, cards, quizzes, listening and typing all work offline, and your answers sync when you are back above ground.
+3. Open it once while online so it can save itself for the Tube. After that, words, Learn, Practice and review all work offline, and your answers sync when you are back above ground.
 
 ## Your weekly routine
 
 1. Ask any AI assistant for next week's words in this format (or edit the templates in **Cards > Import**):
 
    ```
-   deck,type,front,hint,back,notes,tags
+   deck,type,front,hint,back,notes,tags,hook
    GRE Vocab,gre,ephemeral,"Fame can be ephemeral.",lasting a very short time,"fleeting, transient",
-   Italiano,italian,Vorrei un caffè,"Al bar: Vorrei un caffè, per favore.",I would like a coffee,"vorrei = polite 'I want'",bar
    ```
 
    `hint` is the example sentence. For quick lists with no header, use one card per line: `front | back | sentence | notes`.
@@ -67,18 +68,18 @@ It works in **demo mode** straight away (no sign-in, data stays in that browser)
 - Multiple choice never counts as "Easy", because recognising an answer is easier than recalling it.
 - Set your GRE exam date in **More** and GRE gaps are capped so each word is seen several more times before the test.
 - Cards you keep forgetting trigger a prompt to reword them.
-- **Study** has extra practice (weak cards, this week's cards, study ahead) that never changes the schedule.
+- **Practice** has drills, weak words, this week's words and study ahead. They never change the schedule, but every answer is tracked.
+- **Learn** gives new words a first schedule after you try to recall them: right first time starts the gap at a day, otherwise they return within minutes.
 
 ## Things to know on iPhone
 
-- **Speech recognition** (Read aloud) sends audio to Apple, so it needs a connection, and Dictation must be on (Settings > General > Keyboard). iOS often blocks it for apps added to the Home Screen; if the microphone button reports an error, open the same link in a normal Safari tab. **Type it** works everywhere.
-- **Voices**: for the best voices, download them in Settings > Accessibility > Spoken Content > Voices (Italian, and an English one such as Samantha or Daniel). The app uses whichever you pick in **More > Voices**. GRE words are read with a US English voice by default, since the GRE is an American exam.
-- iOS pauses speech when the screen locks, so keep the screen on during a Listen playlist.
-- The speaking score shows how well the phone's recogniser understood you. It is a guide for practice, not an examiner, and it cannot judge accent quality.
+- **Voices**: for the best voices, download one in Settings > Accessibility > Spoken Content > Voices (for example Samantha). Pick it in **More > Voices**. Words are read with a US English voice by default, since the GRE is an American exam.
+- iOS pauses speech when the screen locks.
+- The first tap on a speaker button may be silent while iOS unlocks audio; tap again.
 
 ## Updating the app
 
-Change the files, push to GitHub, and increase `VERSION` in `sw.js` (for example `tubecards-v2`) so phones pick up the new version.
+Change the files, push to GitHub, and increase `VERSION` in `sw.js` (for example `tubecards-v4`) so phones pick up the new version.
 
 ## Backups
 
@@ -91,7 +92,8 @@ index.html, css/app.css, manifest.webmanifest, sw.js, icons/
 js/firebase-config.js    your Firebase details
 js/srs.js                scheduling and queue building
 js/csv.js                import and export
-js/pronounce.js          speaking and typing feedback
+js/practice.js           fill-the-blank and sentence checking
+js/questions.js          GRE-style question bank
 js/stats.js              analytics
 js/store.js              app data and saving
 js/views/                the screens

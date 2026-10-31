@@ -1,7 +1,7 @@
 {
   "name": "TubeCards",
   "short_name": "TubeCards",
-  "description": "GRE vocabulary and Italian flashcards for your commute.",
+  "description": "GRE vocabulary: learn, recall and use new words on your commute.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

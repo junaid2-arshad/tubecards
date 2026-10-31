@@ -6,7 +6,8 @@
 import { h, icon, clear, toast, confirmDialog } from '../ui.js';
 import * as store from '../store.js';
 import { GRADE, schedule, previewLabels, configFor, requeueOffset, shuffle } from '../srs.js';
-import { speak, stopSpeaking, loadVoices } from '../speech.js';
+import { stopSpeaking, loadVoices } from '../speech.js';
+import { speakText, autoSpeak } from './audio.js';
 import { renderFace } from './face.js';
 import { openCardEditor } from './editor.js';
 
@@ -87,12 +88,7 @@ export function runSession(opts) {
   }
 
   // ---------- helpers ----------
-  const speakIt = async (text, lang = 'it-IT') => {
-    await loadVoices();
-    const st = store.state.settings;
-    speak(text, { lang, rate: st.speechRate, voiceURI: lang.startsWith('it') ? st.voiceURI : st.enVoiceURI });
-  };
-  const onSpeak = (t, lang) => speakIt(t, lang);
+  const onSpeak = (t) => speakText(t);
   const setUndo = () => (undoBtn.disabled = undoStack.length === 0);
   const cardsLeft = () => queue.filter((id) => store.state.cards.has(id));
 
@@ -158,7 +154,7 @@ export function runSession(opts) {
       mode = pickMode(current);
       phase = 'front';
       cardStart = performance.now();
-      if (current.kind === 'italian' && !reverse && store.state.settings.autoPlay) speakIt(current.front);
+      if (!reverse) autoSpeak(current.front);
     }
     drawRoute();
     clear(stage);
@@ -195,7 +191,7 @@ export function runSession(opts) {
   function reveal() {
     if (phase !== 'front') return;
     phase = 'back';
-    if (current.kind === 'italian' && reverse && store.state.settings.autoPlay) speakIt(current.front);
+    if (reverse) autoSpeak(current.front);
     showCard(true);
   }
 
@@ -232,7 +228,7 @@ export function runSession(opts) {
     // show the full answer with notes
     clear(stage);
     stage.append(renderFace(current, 'back', { reverse, onSpeak }));
-    if (current.kind === 'italian' && reverse && store.state.settings.autoPlay) speakIt(current.front);
+    if (reverse) autoSpeak(current.front);
     record(g, 'q', ms, ok ? undefined : o.id);
     const nextBtn = h('button', { class: 'btn primary big', onclick: () => next() }, ok ? 'Next' : 'Next card');
     controls.append(nextBtn);

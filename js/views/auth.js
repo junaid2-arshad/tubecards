@@ -46,7 +46,7 @@ export function mountAuth(el) {
       'div',
       { class: 'auth' },
       h('div', { class: 'brand' }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, icon('study', 28)), h('h1', null, 'TubeCards')),
-      h('p', { class: 'dim' }, 'Your GRE and Italian cards, ready for the journey.'),
+      h('p', { class: 'dim' }, 'Your GRE words, ready for the journey.'),
       store.state.loadError ? h('p', { class: 'notice', role: 'alert' }, store.state.loadError) : null,
       h('form', { class: 'stack', onsubmit: submit }, field('Email', email), field('Password', password), error, info, btn, h('button', { type: 'button', class: 'link', onclick: forgot }, 'Forgot your password?')),
     ),

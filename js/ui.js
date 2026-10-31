@@ -1,5 +1,7 @@
 // Small DOM helpers. All user text goes in through text nodes, never innerHTML.
 
+import { findWord } from './practice.js';
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const PROPS = new Set(['value', 'checked', 'disabled', 'selected', 'readOnly', 'multiple']);
 
@@ -65,6 +67,7 @@ const ICONS = {
   warn: 'M12 4 3 20h18L12 4Z M12 10v4 M12 17h.01',
   lock: 'M6 11h12v9H6z M8 11V8a4 4 0 0 1 8 0v3',
   eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z',
+  target: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z M12 12h.01',
   eyeoff: 'M3 3l18 18 M10 6.2A9 9 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3.4 3.9 M6.3 7.6A17 17 0 0 0 2 12s4 6 10 6a9 9 0 0 0 3.2-.6',
 };
 
@@ -185,28 +188,22 @@ export function download(filename, text, type = 'text/plain') {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-export const KIND_LABEL = { gre: 'GRE word', italian: 'Italian', basic: 'Basic' };
-
-// Field labels depend on the card type, so the editor says what each box is for.
+// Labels for the card editor.
 export const FIELD_LABELS = {
-  gre: { front: 'Word', hint: 'Example sentence (shown with the word)', back: 'Meaning', notes: 'Synonyms or notes (shown on the back)' },
-  italian: { front: 'Italian', hint: 'Italian example sentence (shown with the phrase)', back: 'English', notes: 'Notes (shown on the back)' },
-  basic: { front: 'Front', hint: 'Hint (optional, shown on the front)', back: 'Back', notes: 'Notes (optional)' },
+  front: 'Word',
+  hint: 'Example sentence (shown with the word, and used for fill-the-blank)',
+  back: 'Meaning',
+  notes: 'Synonyms or notes (shown on the back)',
+  hook: 'Memory hook (your own picture, story or sound-alike)',
 };
 
-export const deckColor = (kind) => (kind === 'gre' ? 'var(--gre)' : kind === 'italian' ? 'var(--ita)' : 'var(--basic)');
-
-export function deckDot(kind) {
-  return h('span', { class: 'dot', style: { background: deckColor(kind) }, 'aria-hidden': 'true' });
+export function deckDot() {
+  return h('span', { class: 'dot', style: { background: 'var(--gre)' }, 'aria-hidden': 'true' });
 }
 
-// Render text with one word underlined (the vocabulary word inside its example sentence).
+// Render a sentence with the vocabulary word (or its inflected form) underlined.
 export function emphasise(text, word) {
-  if (!text || !word) return text;
-  const i = text.toLowerCase().indexOf(String(word).toLowerCase().slice(0, Math.max(4, Math.min(word.length, 7))));
-  if (i < 0) return text;
-  // extend to the end of the word the stem sits in
-  let j = i;
-  while (j < text.length && /[\p{L}'’-]/u.test(text[j])) j++;
-  return [text.slice(0, i), h('mark', null, text.slice(i, j)), text.slice(j)];
+  const hit = findWord(text, word);
+  if (!hit) return text;
+  return [text.slice(0, hit.start), h('mark', null, text.slice(hit.start, hit.end)), text.slice(hit.end)];
 }

@@ -1,11 +1,12 @@
 // Offline support. Bump VERSION whenever you deploy changes so phones pick up the new files.
-const VERSION = 'tubecards-v2';
+const VERSION = 'tubecards-v3';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
-  'js/app.js', 'js/store.js', 'js/srs.js', 'js/csv.js', 'js/stats.js', 'js/pronounce.js', 'js/speech.js',
+  'js/app.js', 'js/store.js', 'js/srs.js', 'js/csv.js', 'js/stats.js', 'js/speech.js', 'js/practice.js', 'js/questions.js',
   'js/ui.js', 'js/theme.js', 'js/sample.js', 'js/firebase-config.js', 'js/backend-local.js', 'js/backend-firebase.js',
   'js/views/auth.js', 'js/views/study.js', 'js/views/session.js', 'js/views/face.js', 'js/views/editor.js',
-  'js/views/import.js', 'js/views/cards.js', 'js/views/speak.js', 'js/views/statsview.js', 'js/views/more.js',
+  'js/views/import.js', 'js/views/cards.js', 'js/views/statsview.js', 'js/views/more.js',
+  'js/views/audio.js', 'js/views/overlay.js', 'js/views/steps.js', 'js/views/learn.js', 'js/views/drills.js', 'js/views/practice.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',
 ];
 

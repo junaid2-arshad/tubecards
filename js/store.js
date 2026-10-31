@@ -6,7 +6,7 @@ import { firebaseConfig, FIREBASE_SDK_VERSION, firebaseEnabled } from './firebas
 import { createLocalBackend } from './backend-local.js';
 import { newSrs, isoWeek, dayKey } from './srs.js';
 import { parseCards, cardKey } from './csv.js';
-import { SAMPLE_GRE, SAMPLE_ITALIAN } from './sample.js';
+import { SAMPLE_GRE } from './sample.js';
 
 export const DEFAULT_SETTINGS = {
   newPerDay: 10,
@@ -14,9 +14,9 @@ export const DEFAULT_SETTINGS = {
   maxInterval: 365,
   examDate: '',
   quizStyle: 'mixed', // flip | mcq | mixed
-  autoPlay: true,
+  learnBatch: 5, // new words per guided Learn round
+  autoSpeak: false, // say each word aloud when it appears
   speechRate: 0.9,
-  voiceURI: '',
   enVoiceURI: '',
   theme: 'auto', // auto | light | dark
 };
@@ -195,16 +195,43 @@ export function newId() {
   globalThis.crypto.getRandomValues(a);
   return Array.from(a, (b) => b.toString(36).padStart(2, '0')).join('').slice(0, 16);
 }
-export const deckList = () => [...state.decks.values()].sort((a, b) => a.name.localeCompare(b.name));
-export const cardList = () => [...state.cards.values()];
+// The app is GRE-only. Anything else left over from earlier versions (Italian cards) is hidden, not deleted.
+const isGre = (x) => !x.kind || x.kind === 'gre';
+export const deckList = () => [...state.decks.values()].filter(isGre).sort((a, b) => a.name.localeCompare(b.name));
+export const cardList = () => [...state.cards.values()].filter(isGre);
+export const legacyCount = () => [...state.cards.values()].filter((c) => !isGre(c)).length;
+export const legacyDeckIds = () => new Set([...state.decks.values()].filter((d) => !isGre(d)).map((d) => d.id));
+
+// Review history without answers that belong to hidden (non-GRE) decks or to the removed speaking practice.
+export function visibleDays() {
+  const hidden = legacyDeckIds();
+  const out = new Map();
+  for (const [day, list] of state.days) {
+    const keep = list.filter((e) => e.m !== 's' && !(e.d && hidden.has(e.d)));
+    if (keep.length) out.set(day, keep);
+  }
+  return out;
+}
+
+export function deleteLegacy() {
+  const ids = [...state.cards.values()].filter((c) => !isGre(c)).map((c) => c.id);
+  const decks = [...state.decks.values()].filter((d) => !isGre(d)).map((d) => d.id);
+  removeCards(ids);
+  for (const id of decks) {
+    state.decks.delete(id);
+    fire(() => backend.delDeck(id));
+  }
+  emit('decks');
+  return { cards: ids.length, decks: decks.length };
+}
 export const deckNewLimit = (deckId) => state.decks.get(deckId)?.newPerDay ?? state.settings.newPerDay;
 export const findDeck = (name) => deckList().find((d) => d.name.trim().toLowerCase() === String(name).trim().toLowerCase());
 
 // ---------- decks ----------
-export function ensureDeck(name, kind = 'basic') {
+export function ensureDeck(name, kind = 'gre') {
   const existing = findDeck(name);
   if (existing) return existing;
-  const deck = { id: newId(), name: String(name).trim() || 'My cards', kind, newPerDay: state.settings.newPerDay, createdAt: Date.now() };
+  const deck = { id: newId(), name: String(name).trim() || 'GRE Vocab', kind: 'gre', newPerDay: state.settings.newPerDay, createdAt: Date.now() };
   state.decks.set(deck.id, deck);
   fire(() => backend.setDeck(deck));
   emit('decks');
@@ -230,11 +257,13 @@ function makeCard(f, now = Date.now()) {
   return {
     id: newId(),
     deckId: f.deckId,
-    kind: f.kind || 'basic',
+    kind: 'gre',
     front: f.front.trim(),
     hint: (f.hint || '').trim(),
     back: f.back.trim(),
     notes: (f.notes || '').trim(),
+    hook: (f.hook || '').trim(),
+    mine: [],
     tags: f.tags || [],
     batch: f.batch || isoWeek(now),
     createdAt: now,
@@ -254,7 +283,7 @@ export function updateCard(id, patch) {
   const c = state.cards.get(id);
   if (!c) return null;
   const clean = { ...patch, updatedAt: Date.now() };
-  for (const k of ['front', 'hint', 'back', 'notes']) if (typeof clean[k] === 'string') clean[k] = clean[k].trim();
+  for (const k of ['front', 'hint', 'back', 'notes', 'hook']) if (typeof clean[k] === 'string') clean[k] = clean[k].trim();
   Object.assign(c, clean);
   fire(() => backend.patchCard(id, clean));
   emit('cards');
@@ -270,7 +299,7 @@ export function removeCards(ids) {
 // Import parsed rows. mode: 'update' keeps study progress but refreshes the text; 'skip' leaves existing cards alone.
 export function importCards(rows, { mode = 'update' } = {}) {
   const byKey = new Map();
-  for (const c of state.cards.values()) byKey.set(cardKey(state.decks.get(c.deckId)?.name || '', c.front), c);
+  for (const c of cardList()) byKey.set(cardKey(state.decks.get(c.deckId)?.name || '', c.front), c);
   const now = Date.now();
   const toWrite = [];
   const newDecks = new Set();
@@ -279,7 +308,7 @@ export function importCards(rows, { mode = 'update' } = {}) {
   let skipped = 0;
   for (const row of rows) {
     const had = findDeck(row.deck);
-    const deck = ensureDeck(row.deck, row.kind);
+    const deck = ensureDeck(row.deck);
     if (!had) newDecks.add(deck.name);
     const key = cardKey(deck.name, row.front);
     const ex = byKey.get(key);
@@ -288,7 +317,8 @@ export function importCards(rows, { mode = 'update' } = {}) {
         skipped++;
         continue;
       }
-      Object.assign(ex, { kind: row.kind, hint: row.hint, back: row.back, notes: row.notes, updatedAt: now });
+      Object.assign(ex, { hint: row.hint, back: row.back, notes: row.notes, updatedAt: now });
+      if (row.hook) ex.hook = row.hook;
       if (row.tags.length) ex.tags = row.tags;
       if (row.batch) ex.batch = row.batch;
       toWrite.push(ex);
@@ -308,8 +338,7 @@ export function importCards(rows, { mode = 'update' } = {}) {
 
 export function loadSample() {
   const a = importCards(parseCards(SAMPLE_GRE).cards, { mode: 'skip' });
-  const b = importCards(parseCards(SAMPLE_ITALIAN).cards, { mode: 'skip' });
-  return { added: a.added + b.added, skipped: a.skipped + b.skipped };
+  return { added: a.added, skipped: a.skipped };
 }
 
 // ---------- answers ----------
@@ -318,6 +347,18 @@ export function logEntry(entry) {
   state.days.set(key, [...(state.days.get(key) || []), entry]);
   fire(() => backend.addEntry(key, entry));
   emit('days');
+}
+
+const STATE_CODE = { new: 'n', learning: 'l', review: 'r' };
+
+// Practice answers (fill the blank, matching, GRE-style questions, sentences). They never change the schedule.
+// m: 'm' match, 'c' fill the blank, 'w' sentence, 't' GRE-style question. g: 3 right, 1 wrong.
+export function logPractice({ card, m, g, ms = 0, wrongId, q }) {
+  const entry = { t: Date.now(), c: card?.id || '', d: card?.deckId || '', g, m, s: 0, ps: STATE_CODE[card?.srs?.state] || 'n', ms: Math.round(Math.min(ms, 120000)) };
+  if (wrongId) entry.x = wrongId;
+  if (q) entry.q = q;
+  logEntry(entry);
+  return entry;
 }
 
 // Scheduled answer: updates the card schedule and logs the answer. Returns the previous schedule for undo.

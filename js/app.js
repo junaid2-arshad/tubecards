@@ -7,14 +7,14 @@ import { unlockSpeech } from './speech.js';
 import { mountAuth } from './views/auth.js';
 import * as study from './views/study.js';
 import * as cards from './views/cards.js';
-import * as speak from './views/speak.js';
+import * as practice from './views/practice.js';
 import * as statsView from './views/statsview.js';
 import * as more from './views/more.js';
 
 const ROUTES = {
   study: { label: 'Study', icon: 'study', mod: study },
+  practice: { label: 'Practice', icon: 'target', mod: practice },
   cards: { label: 'Cards', icon: 'cards', mod: cards },
-  speak: { label: 'Speak', icon: 'speak', mod: speak },
   stats: { label: 'Stats', icon: 'stats', mod: statsView },
   more: { label: 'More', icon: 'more', mod: more },
 };

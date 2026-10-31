@@ -1,14 +1,13 @@
 // Analytics over cards and the review log. Pure functions.
 //
 // A log entry looks like:
-//  { t: ms, c: cardId, d: deckId, g: 1-4, m: 'f'|'q'|'s', s: 1 scheduled | 0 practice,
-//    ps: 'n'|'l'|'r' (state before), ms: answer time, x: wrongly chosen cardId (multiple choice),
-//    sc: speaking score, tg: speaking target text }
+//  { t: ms, c: cardId, d: deckId, g: 1-4, m: f flip|q choice|r typed|m match|c blank|w sentence|t question, s: 1 scheduled | 0 practice,
+//    ps: 'n'|'l'|'r' (state before), ms: answer time, x: wrongly chosen cardId, q: question id }
 // Grade 1 means you got it wrong; grades 2-4 mean you recalled it.
 
 import { addDays, dayKey, startOfDay, DAY } from './srs.js';
 
-export const isRecall = (e) => e.m !== 's';
+export const isRecall = () => true;
 export const isCorrect = (e) => e.g >= 2;
 
 export function summarize(entries) {
@@ -123,7 +122,7 @@ export function hardest(cards, n = 8) {
 export function confusions(entries, cardsMap, n = 5) {
   const pairs = new Map();
   for (const e of entries) {
-    if (e.m !== 'q' || !e.x || e.g !== 1) continue;
+    if ((e.m !== 'q' && e.m !== 'c') || !e.x || e.g !== 1) continue;
     const key = [e.c, e.x].sort().join('|');
     pairs.set(key, (pairs.get(key) || 0) + 1);
   }
@@ -137,32 +136,23 @@ export function confusions(entries, cardsMap, n = 5) {
     .slice(0, n);
 }
 
-export function speakSummary(days, todayMs, n = 14) {
-  const since = addDays(todayMs, -(n - 1));
-  const entries = allEntries(days, since).filter((e) => e.m === 's');
-  const recent = [];
-  for (let i = n - 1; i >= 0; i--) {
-    const ms = addDays(todayMs, -i);
-    const list = dayEntries(days, dayKey(ms)).filter((e) => e.m === 's');
-    recent.push({ day: dayKey(ms), ms, count: list.length, avg: list.length ? list.reduce((a, e) => a + e.sc, 0) / list.length : null });
-  }
-  const byText = new Map();
+export const ACTIVITY_LABEL = { f: 'Flip cards', q: 'Multiple choice', r: 'Typed recall', m: 'Matching', c: 'Fill the blank', w: 'Own sentences', t: 'GRE-style questions' };
+
+// Answers and accuracy per kind of activity.
+export function byActivity(entries) {
+  const out = new Map();
   for (const e of entries) {
-    const key = e.tg || e.c;
-    if (!key) continue;
-    const o = byText.get(key) || { tg: e.tg || '', c: e.c, sum: 0, count: 0 };
-    o.sum += e.sc;
-    o.count++;
-    byText.set(key, o);
+    if (!ACTIVITY_LABEL[e.m]) continue;
+    const o = out.get(e.m) || { m: e.m, label: ACTIVITY_LABEL[e.m], n: 0, ok: 0 };
+    o.n++;
+    if (isCorrect(e)) o.ok++;
+    out.set(e.m, o);
   }
-  const weakest = [...byText.values()]
-    .map((o) => ({ ...o, avg: o.sum / o.count }))
-    .filter((o) => o.avg < 90)
-    .sort((a, b) => a.avg - b.avg)
-    .slice(0, 5);
-  const avg = entries.length ? entries.reduce((a, e) => a + e.sc, 0) / entries.length : null;
-  return { avg, count: entries.length, recent, weakest };
+  return [...out.values()].map((o) => ({ ...o, acc: o.n ? o.ok / o.n : null })).sort((a, b) => b.n - a.n);
 }
+
+// Cards that have left the "new" state.
+export const learnedCount = (cards) => cards.filter((c) => !c.suspended && c.srs && c.srs.state !== 'new').length;
 
 export function weekCompare(days, todayMs) {
   const cur = [];

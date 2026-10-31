@@ -18,7 +18,6 @@ export function openImport({ onDone } = {}) {
   const file = h('input', { type: 'file', accept: '.csv,.tsv,.txt,.json,text/csv,text/plain,application/json', class: 'file-input', 'aria-label': 'Choose a file' });
   const deckName = h('input', { class: 'input', type: 'text', list: 'deck-names', placeholder: 'Used for lines without a deck', value: store.deckList()[0]?.name || '' });
   const datalist = h('datalist', { id: 'deck-names' }, store.deckList().map((d) => h('option', { value: d.name })));
-  const kindSel = h('select', { class: 'input', 'aria-label': 'Card type for lines without one' }, h('option', { value: 'gre' }, 'GRE word'), h('option', { value: 'italian' }, 'Italian'), h('option', { value: 'basic' }, 'Basic'));
   const week = h('input', { class: 'input', type: 'text', value: isoWeek(Date.now()), 'aria-label': 'Week label' });
   const status = h('div', { class: 'import-status', 'aria-live': 'polite' });
   const importBtn = h('button', { class: 'btn primary', disabled: true }, 'Import');
@@ -33,7 +32,7 @@ export function openImport({ onDone } = {}) {
       importBtn.textContent = 'Import';
       return;
     }
-    const defaults = { deck: deckName.value.trim() || 'My cards', kind: kindSel.value };
+    const defaults = { deck: deckName.value.trim() || 'GRE Vocab' };
     parsed = /^\s*[[{]/.test(raw) ? parseJsonCards(raw, defaults) : parseCards(raw, defaults);
     for (const c of parsed.cards) if (!c.batch) c.batch = week.value.trim() || isoWeek(Date.now());
     const n = parsed.cards.length;
@@ -44,7 +43,7 @@ export function openImport({ onDone } = {}) {
       status.append(h('p', { class: 'form-error' }, `${parsed.errors.length} ${parsed.errors.length === 1 ? 'line was' : 'lines were'} skipped:`), h('ul', { class: 'plain-list' }, parsed.errors.slice(0, 5).map((e) => h('li', null, e.line ? `Line ${e.line}: ${e.msg}` : e.msg))));
     }
   }
-  for (const el of [text, deckName, kindSel, week]) el.addEventListener('input', parse);
+  for (const el of [text, deckName, week]) el.addEventListener('input', parse);
 
   file.addEventListener('change', async () => {
     const f = file.files?.[0];
@@ -71,11 +70,11 @@ export function openImport({ onDone } = {}) {
     text,
     h('div', { class: 'row wrap' }, file),
     datalist,
-    h('div', { class: 'grid2' }, field('Deck for lines without one', deckName), field('Type for lines without one', kindSel)),
+    field('Deck for lines without one', deckName),
     field('Week label for this batch', week, 'Lets you study just this week’s additions.'),
     h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'If a card already exists'), segmented({ label: 'Existing cards', value: mode, options: [{ value: 'update', label: 'Update the text' }, { value: 'skip', label: 'Leave it alone' }], onChange: (v) => (mode = v) })),
     status,
-    h('div', { class: 'row end wrap' }, h('button', { class: 'btn ghost', onclick: () => download('gre-template.csv', TEMPLATES.gre, 'text/csv') }, 'GRE template'), h('button', { class: 'btn ghost', onclick: () => download('italian-template.csv', TEMPLATES.italian, 'text/csv') }, 'Italian template'), importBtn),
+    h('div', { class: 'row end wrap' }, h('button', { class: 'btn ghost', onclick: () => download('gre-template.csv', TEMPLATES.gre, 'text/csv') }, 'Template (CSV)'), importBtn),
   );
   const sheet = openSheet({ title: 'Import cards', content, wide: true });
   return sheet;

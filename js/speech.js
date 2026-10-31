@@ -1,7 +1,6 @@
-// Speech helpers: text-to-speech (listening) and speech recognition (speaking practice).
-// Both use the browser's built-in engines, so they cost nothing and need no keys.
-//  - Text-to-speech works offline once the iPhone voice is downloaded (Settings > Accessibility > Spoken Content > Voices).
-//  - Speech recognition on iPhone sends audio to Apple, so it needs a connection.
+// Text-to-speech for hearing how a word is pronounced. Uses the browser's built-in voices,
+// so it costs nothing and works offline once the iPhone voice is downloaded
+// (Settings > Accessibility > Spoken Content > Voices).
 
 export const ttsSupported = () => typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
 
@@ -97,62 +96,4 @@ export function unlockSpeech() {
   } catch {
     /* ignore */
   }
-}
-
-// ---------- recognition ----------
-export const sttSupported = () => typeof window !== 'undefined' && !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-
-export function describeSttError(code) {
-  switch (code) {
-    case 'not-allowed':
-    case 'service-not-allowed':
-      return 'Microphone or speech recognition is blocked. Allow the microphone for this site, and turn on Dictation in iPhone Settings > General > Keyboard. If you opened this from the Home Screen, try it in Safari instead.';
-    case 'no-speech':
-      return 'I did not hear anything. Move closer to the phone and try again.';
-    case 'audio-capture':
-      return 'No microphone was found.';
-    case 'network':
-      return 'Speech recognition needs an internet connection.';
-    case 'language-not-supported':
-      return 'Italian speech recognition is not available on this device.';
-    case 'aborted':
-      return '';
-    default:
-      return 'Speech recognition stopped unexpectedly. Try again.';
-  }
-}
-
-// Returns { stop(), result: Promise<{ alternatives: string[], confidence: number }> }. Rejects with { code } on error.
-export function listen({ lang = 'it-IT', onInterim } = {}) {
-  const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const rec = new Rec();
-  rec.lang = lang;
-  rec.interimResults = true;
-  rec.maxAlternatives = 4;
-  rec.continuous = false;
-  let final = null;
-  let lastInterim = '';
-  const result = new Promise((resolve, reject) => {
-    rec.onresult = (e) => {
-      const res = e.results[e.results.length - 1];
-      if (res.isFinal) {
-        final = { alternatives: Array.from(res).map((a) => a.transcript), confidence: res[0].confidence || 0 };
-      } else {
-        lastInterim = res[0].transcript;
-        onInterim?.(lastInterim);
-      }
-    };
-    rec.onerror = (e) => reject({ code: e.error });
-    rec.onend = () => {
-      if (final) resolve(final);
-      else if (lastInterim) resolve({ alternatives: [lastInterim], confidence: 0 });
-      else reject({ code: 'no-speech' });
-    };
-  });
-  try {
-    rec.start();
-  } catch (e) {
-    return { stop() {}, result: Promise.reject({ code: 'service-not-allowed' }) };
-  }
-  return { stop: () => rec.stop(), result };
 }

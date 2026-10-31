@@ -43,7 +43,7 @@ export function mount(el) {
       return;
     }
 
-    searchInput = h('input', { class: 'input', type: 'search', placeholder: 'Search cards', value: view.q, 'aria-label': 'Search cards', oninput: (e) => { view.q = e.target.value; view.shown = 60; renderList(); } });
+    searchInput = h('input', { class: 'input', type: 'search', placeholder: 'Search words', value: view.q, 'aria-label': 'Search words', oninput: (e) => { view.q = e.target.value; view.shown = 60; renderList(); } });
     const deckSel = h('select', { class: 'input', 'aria-label': 'Deck', onchange: (e) => { view.deck = e.target.value; view.shown = 60; renderList(); } }, h('option', { value: 'all' }, 'All decks'), decks.map((d) => h('option', { value: d.id, selected: view.deck === d.id }, d.name)));
     const weeks = [...new Set(all.map((c) => c.batch).filter(Boolean))].sort().reverse();
     const weekSel = h('select', { class: 'input', 'aria-label': 'Week added', onchange: (e) => { view.week = e.target.value; view.shown = 60; renderList(); } }, h('option', { value: 'all' }, 'Any week'), weeks.map((w) => h('option', { value: w, selected: view.week === w }, w)));
@@ -59,7 +59,7 @@ export function mount(el) {
       const rows = store
         .cardList()
         .filter((c) => (view.deck === 'all' || c.deckId === view.deck) && (view.week === 'all' || c.batch === view.week))
-        .filter((c) => !q || [c.front, c.back, c.hint, c.notes, (c.tags || []).join(' ')].join(' ').toLowerCase().includes(q))
+        .filter((c) => !q || [c.front, c.back, c.hint, c.notes, c.hook, (c.tags || []).join(' ')].join(' ').toLowerCase().includes(q))
         .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0) || a.front.localeCompare(b.front));
       count.textContent = `${rows.length} ${rows.length === 1 ? 'card' : 'cards'}`;
       if (!rows.length) list.append(h('p', { class: 'dim pad' }, 'No cards match.'));
@@ -69,7 +69,7 @@ export function mount(el) {
           h(
             'button',
             { class: 'card-row', onclick: () => openCardEditor({ cardId: c.id }) },
-            deckDot(c.kind),
+            deckDot(),
             h('span', { class: 'row-main' }, h('strong', null, c.front), h('span', { class: 'dim clamp' }, c.back)),
             h('span', { class: `pill ${st.cls}` }, st.text),
           ),

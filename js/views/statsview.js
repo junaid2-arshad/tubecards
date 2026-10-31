@@ -119,7 +119,7 @@ export function mount(el, ctx) {
     clear(el);
     const now = Date.now();
     const cards = store.cardList();
-    const days = store.state.days;
+    const days = store.visibleDays();
     const root = h('div', { class: 'view' });
     el.append(root);
     root.append(h('div', { class: 'view-head' }, h('h1', null, 'Stats')));
@@ -141,7 +141,8 @@ export function mount(el, ctx) {
       h(
         'div',
         { class: 'kpis' },
-        kpi(String(streak), streak === 1 ? 'day streak' : 'day streak'),
+        kpi(String(S.learnedCount(cards)), 'words learned'),
+        kpi(String(streak), 'day streak'),
         kpi(String(today.n), today.n === 1 ? 'answer today' : 'answers today'),
         kpi(pct(tr), 'kept in memory, 30 days', 'Of cards you had already learned, the share you remembered when they came back.'),
       ),
@@ -172,7 +173,7 @@ export function mount(el, ctx) {
           'section',
           { class: 'panel' },
           h('h2', null, 'By deck'),
-          h('div', { class: 'list' }, rows.map((r) => h('div', { class: 'deck-stat' }, h('div', { class: 'deck-stat-head' }, deckDot(r.deck.kind), h('strong', null, r.deck.name), h('span', { class: 'dim' }, `${r.total} ${r.total === 1 ? 'card' : 'cards'}`)), h('p', { class: 'dim' }, `${r.mature} well known, ${r.young + r.learning} still learning, ${r.new} new. Last 30 days: ${r.answers30} answers, ${pct(r.acc30)} correct. Average gap ${r.avgIvl ? Math.round(r.avgIvl) + ' days' : 'not yet'}.`)))),
+          h('div', { class: 'list' }, rows.map((r) => h('div', { class: 'deck-stat' }, h('div', { class: 'deck-stat-head' }, deckDot(), h('strong', null, r.deck.name), h('span', { class: 'dim' }, `${r.total} ${r.total === 1 ? 'card' : 'cards'}`)), h('p', { class: 'dim' }, `${r.mature} well known, ${r.young + r.learning} still learning, ${r.new} new. Last 30 days: ${r.answers30} answers, ${pct(r.acc30)} correct. Average gap ${r.avgIvl ? Math.round(r.avgIvl) + ' days' : 'not yet'}.`)))),
         ),
       );
     }
@@ -184,10 +185,10 @@ export function mount(el, ctx) {
         h(
           'section',
           { class: 'panel' },
-          h('h2', null, 'Hardest cards'),
-          h('p', { class: 'dim' }, 'The cards you have forgotten most often.'),
+          h('h2', null, 'Hardest words'),
+          h('p', { class: 'dim' }, 'The words you have forgotten most often.'),
           h('ul', { class: 'plain-list spaced' }, hard.map((c) => h('li', null, h('strong', null, c.front), ' ', h('span', { class: 'dim' }, c.back), h('span', { class: 'pill due right' }, `${c.srs.lapses}× forgotten`)))),
-          h('button', { class: 'btn ghost', onclick: () => (location.hash = '#/study') }, 'Go to Study to practise weak cards'),
+          h('button', { class: 'btn ghost', onclick: () => (location.hash = '#/practice') }, 'Practise weak words'),
         ),
       );
     }
@@ -196,13 +197,10 @@ export function mount(el, ctx) {
       root.append(h('section', { class: 'panel' }, h('h2', null, 'Often mixed up'), h('p', { class: 'dim' }, 'Pairs you confused in multiple choice. Worth reading side by side.'), h('ul', { class: 'plain-list spaced' }, conf.map((p) => h('li', null, h('strong', null, p.a.front), ' and ', h('strong', null, p.b.front), h('span', { class: 'pill muted right' }, `${p.count}×`))))));
     }
 
-    // speaking
-    const sp = S.speakSummary(days, now, 14);
-    if (sp.count) {
-      const spData = sp.recent.map((d) => ({ label: new Date(d.ms).getDate().toString(), value: d.avg == null ? null : Math.round(d.avg), tip: d.avg == null ? `${fmtDay(d.ms)}: no speaking practice` : `${fmtDay(d.ms)}: average ${Math.round(d.avg)} from ${d.count} ${d.count === 1 ? 'try' : 'tries'}`, row: d.avg == null ? null : [fmtDay(d.ms), Math.round(d.avg), d.count] }));
-      const blk = chartBlock({ title: 'Speaking and listening', sub: `Average score ${Math.round(sp.avg)} over ${sp.count} ${sp.count === 1 ? 'try' : 'tries'} in the last 14 days`, chart: line(spData, { fmt: (v) => String(Math.round(v)), name: 'Average speaking score per day' }), data: spData, readoutDefault: 'Tap a day to see the detail.', cols: ['Day', 'Average score', 'Tries'] });
-      if (sp.weakest.length) blk.append(h('h3', null, 'Needs more practice'), h('ul', { class: 'plain-list spaced' }, sp.weakest.map((w) => h('li', null, h('span', { lang: 'it' }, w.tg), h('span', { class: 'pill due right' }, String(Math.round(w.avg)))))));
-      root.append(blk);
+    // by activity
+    const acts = S.byActivity(all30);
+    if (acts.length) {
+      root.append(h('section', { class: 'panel' }, h('h2', null, 'By activity'), h('p', { class: 'dim' }, 'Last 30 days. Typed recall and sentences are harder than flipping, so lower scores there are normal.'), h('div', { class: 'list' }, acts.map((a) => h('div', { class: 'row-btn static' }, h('span', { class: 'row-main' }, h('strong', null, a.label), h('span', { class: 'dim' }, `${a.n} ${a.n === 1 ? 'answer' : 'answers'}`)), h('span', { class: 'row-count' }, pct(a.acc)))))));
     }
   }
 
